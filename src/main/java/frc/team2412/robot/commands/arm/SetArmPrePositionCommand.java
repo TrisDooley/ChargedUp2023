@@ -28,6 +28,6 @@ public class SetArmPrePositionCommand extends CommandBase {
 
 	@Override
 	public boolean isFinished() {
-        return true;
+		return true;
 	}
 }

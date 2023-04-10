@@ -15,9 +15,9 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.team2412.robot.commands.arm.ManualArmOverrideOffCommand;
 import frc.team2412.robot.commands.arm.ManualArmOverrideOnCommand;
+import frc.team2412.robot.commands.arm.SetArmPrePositionCommand;
 import frc.team2412.robot.commands.arm.SetFullArmCommand;
 import frc.team2412.robot.commands.arm.SetWristCommand;
-import frc.team2412.robot.commands.arm.SetArmPrePositionCommand;
 import frc.team2412.robot.commands.drivebase.DriveCommand;
 import frc.team2412.robot.commands.intake.IntakeDefaultCommand;
 import frc.team2412.robot.commands.intake.IntakeSetInCommand;
@@ -36,18 +36,18 @@ public class Controls {
 	private final CommandXboxController driveController;
 	private final CommandXboxController codriveController;
 
-	//sticks: drive
-	//left trigger while held: intake 
-	//left trigger when released: hold
-	//right trigger: hold to prescore
-	//right trigger: release to wrist score
-	//right bumper: hold to extake
-	//right bumper: release to lower arm
+	// sticks: drive
+	// left trigger while held: intake
+	// left trigger when released: hold
+	// right trigger: hold to prescore
+	// right trigger: release to wrist score
+	// right bumper: hold to extake
+	// right bumper: release to lower arm
 
-	//Codriver controls should be the same
+	// Codriver controls should be the same
 
-	//Driver
-	
+	// Driver
+
 	public final Trigger intakeButton;
 	public final Trigger prescoreButton;
 	public final Trigger scoreButton;
@@ -74,13 +74,13 @@ public class Controls {
 		codriveController = new CommandXboxController(CODRIVER_CONTROLLER_PORT);
 		this.s = s;
 
-		//Driver Bindings
+		// Driver Bindings
 		triggerDriverAssist = driveController.leftBumper();
 		intakeButton = driveController.leftTrigger();
 		prescoreButton = driveController.rightTrigger();
 		scoreButton = driveController.rightBumper();
 
-		//Codriver Bindings
+		// Codriver Bindings
 		armManualControlOn = codriveController.start();
 		armManualControlOff = codriveController.back();
 
@@ -121,7 +121,7 @@ public class Controls {
 	}
 
 	public void bindArmControls() {
-		//Manual control
+		// Manual control
 		s.armSubsystem.setPresetAdjustJoysticks(
 				codriveController::getRightY, codriveController::getLeftY);
 
@@ -130,22 +130,22 @@ public class Controls {
 						s.armSubsystem, codriveController::getRightY, codriveController::getLeftY));
 		armManualControlOff.onTrue(new ManualArmOverrideOffCommand(s.armSubsystem));
 
-
-		//Codriver setting position controls
+		// Codriver setting position controls
 		positionLow.onTrue(new SetArmPrePositionCommand(s.armSubsystem, ARM_LOW_POSITION));
 		positionMiddle.onTrue(new SetArmPrePositionCommand(s.armSubsystem, ARM_MIDDLE_POSITION));
 		positionHigh.onTrue(new SetArmPrePositionCommand(s.armSubsystem, ARM_HIGH_POSITION));
-		positionSubstation.onTrue(new SetArmPrePositionCommand(s.armSubsystem, ARM_SUBSTATION_POSITION));
+		positionSubstation.onTrue(
+				new SetArmPrePositionCommand(s.armSubsystem, ARM_SUBSTATION_POSITION));
 
-
-		//Driver Activating Arm Controls
-		//Prescore
-		prescoreButton.onTrue(new SetFullArmCommand(s.armSubsystem, s.armSubsystem.getPosition(), WRIST_PRESCORE));
+		// Driver Activating Arm Controls
+		// Prescore
+		prescoreButton.onTrue(
+				new SetFullArmCommand(s.armSubsystem, s.armSubsystem.getPosition(), WRIST_PRESCORE));
 		prescoreButton.onFalse(new SetWristCommand(s.armSubsystem, WRIST_SCORE));
-		//Score
+		// Score
 		scoreButton.onTrue(new IntakeSetOutCommand(s.intakeSubsystem));
 		scoreButton.onFalse(new SetFullArmCommand(s.armSubsystem, ARM_LOW_POSITION, WRIST_RETRACT));
-		//Retract when done scoring
+		// Retract when done scoring
 		scoreButton.onFalse(new SetFullArmCommand(s.armSubsystem, ARM_LOW_POSITION, WRIST_RETRACT));
 	}
 
@@ -154,11 +154,13 @@ public class Controls {
 				.setDefaultCommand(s.intakeSubsystem, new IntakeDefaultCommand(s.intakeSubsystem));
 
 		// Driver Buttons
-		//Turn the motors on once
+		// Turn the motors on once
 		intakeButton.onTrue(new IntakeSetInCommand(s.intakeSubsystem));
-		//Set new position if codriver changes the arm position while intaking
-		intakeButton.whileTrue(new SetFullArmCommand(s.armSubsystem, s.armSubsystem.getPosition(), WRIST_PRESCORE));
-		//Carry position when done intaking(the intake motors stall to hold a piece, no need to stop them)
+		// Set new position if codriver changes the arm position while intaking
+		intakeButton.whileTrue(
+				new SetFullArmCommand(s.armSubsystem, s.armSubsystem.getPosition(), WRIST_PRESCORE));
+		// Carry position when done intaking(the intake motors stall to hold a piece, no need to stop
+		// them)
 		intakeButton.onFalse(new SetFullArmCommand(s.armSubsystem, ARM_LOW_POSITION, WRIST_RETRACT));
 	}
 
