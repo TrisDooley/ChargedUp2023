@@ -11,22 +11,19 @@ import static frc.team2412.robot.subsystems.ArmSubsystem.ArmConstants.PositionTy
 
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.ProxyCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.team2412.robot.commands.arm.ManualArmOverrideOffCommand;
 import frc.team2412.robot.commands.arm.ManualArmOverrideOnCommand;
 import frc.team2412.robot.commands.arm.SetFullArmCommand;
 import frc.team2412.robot.commands.arm.SetWristCommand;
+import frc.team2412.robot.commands.arm.SetArmPrePositionCommand;
 import frc.team2412.robot.commands.drivebase.DriveCommand;
 import frc.team2412.robot.commands.intake.IntakeDefaultCommand;
-import frc.team2412.robot.commands.intake.IntakeSetFastOutCommand;
 import frc.team2412.robot.commands.intake.IntakeSetInCommand;
 import frc.team2412.robot.commands.intake.IntakeSetOutCommand;
 import frc.team2412.robot.commands.led.LEDPurpleCommand;
 import frc.team2412.robot.commands.led.LEDYellowCommand;
-import frc.team2412.robot.subsystems.IntakeSubsystem.IntakeConstants.GamePieceType;
-import frc.team2412.robot.util.DriverAssist;
 
 public class Controls {
 	public static class ControlConstants {
@@ -39,33 +36,33 @@ public class Controls {
 	private final CommandXboxController driveController;
 	private final CommandXboxController codriveController;
 
-	// Drivebase
+	//sticks: drive
+	//left trigger while held: intake 
+	//left trigger when released: hold
+	//right trigger: hold to prescore
+	//right trigger: release to wrist score
+	//right bumper: hold to extake
+	//right bumper: release to lower arm
 
-	public final Trigger triggerDriverAssistCube;
-	public final Trigger triggerDriverAssistCone;
+	//Codriver controls should be the same
 
-	// Arm
+	//Driver
+	
+	public final Trigger intakeButton;
+	public final Trigger prescoreButton;
+	public final Trigger scoreButton;
+
+	public final Trigger triggerDriverAssist;
+
+	// Codriver
 
 	public final Trigger armManualControlOn;
 	public final Trigger armManualControlOff;
 
-	public final Trigger armLowButton;
-	public final Trigger armMiddleButton;
-	public final Trigger armHighButton;
-	public final Trigger armSubstationButton;
-
-	public final Trigger wristCarryButton;
-	public final Trigger wristPrescoreButton;
-	public final Trigger wristScoreButton;
-	public final Trigger wristIntakeButton;
-
-	// intake
-	public final Trigger codriveIntakeInButton;
-	public final Trigger codriveIntakeOutButton;
-	// public final Trigger codriveIntakeStopButton;
-	public final Trigger driveIntakeInButton;
-	public final Trigger driveIntakeOutButton;
-	public final Trigger driveIntakeFastOutButton;
+	public final Trigger positionLow;
+	public final Trigger positionMiddle;
+	public final Trigger positionHigh;
+	public final Trigger positionSubstation;
 
 	public final Trigger ledPurple;
 	public final Trigger ledYellow;
@@ -77,26 +74,20 @@ public class Controls {
 		codriveController = new CommandXboxController(CODRIVER_CONTROLLER_PORT);
 		this.s = s;
 
+		//Driver Bindings
+		triggerDriverAssist = driveController.leftBumper();
+		intakeButton = driveController.leftTrigger();
+		prescoreButton = driveController.rightTrigger();
+		scoreButton = driveController.rightBumper();
+
+		//Codriver Bindings
 		armManualControlOn = codriveController.start();
 		armManualControlOff = codriveController.back();
-		triggerDriverAssistCube = driveController.leftBumper();
-		triggerDriverAssistCone = driveController.rightBumper();
 
-		armLowButton = codriveController.y();
-		armMiddleButton = codriveController.x();
-		armHighButton = codriveController.a();
-		armSubstationButton = codriveController.b();
-
-		wristCarryButton = codriveController.povDown();
-		wristScoreButton = codriveController.povRight();
-		wristPrescoreButton = codriveController.povLeft();
-		wristIntakeButton = codriveController.povUp();
-
-		codriveIntakeInButton = codriveController.rightTrigger();
-		codriveIntakeOutButton = codriveController.leftTrigger();
-		driveIntakeInButton = driveController.a();
-		driveIntakeOutButton = driveController.y();
-		driveIntakeFastOutButton = driveController.b();
+		positionLow = codriveController.y();
+		positionMiddle = codriveController.x();
+		positionHigh = codriveController.a();
+		positionSubstation = codriveController.b();
 
 		ledPurple = codriveController.rightBumper();
 		ledYellow = codriveController.leftBumper();
@@ -123,28 +114,14 @@ public class Controls {
 								s.drivebaseSubsystem,
 								driveController::getLeftY,
 								driveController::getLeftX,
-								driveController::getRightX,
-								driveController::getRightTriggerAxis));
+								driveController::getRightX));
 		driveController.start().onTrue(new InstantCommand(s.drivebaseSubsystem::resetGyroAngle));
-		driveController.back().onTrue(new InstantCommand(s.drivebaseSubsystem::resetPose));
+		driveController.rightStick().onTrue(new InstantCommand(s.drivebaseSubsystem::resetPose));
 		driveController.leftStick().onTrue(new InstantCommand(s.drivebaseSubsystem::toggleXWheels));
-
-		// CommandBase driverAssistCube =
-		// 		new ProxyCommand(() -> DriverAssist.alignRobot(s.drivebaseSubsystem, GamePieceType.CUBE));
-		triggerDriverAssistCube.onTrue(
-				new ProxyCommand(() -> DriverAssist.alignRobot(s.drivebaseSubsystem, GamePieceType.CUBE)));
-		// CommandBase driverAssistCone =
-		// 		new ProxyCommand(() -> DriverAssist.alignRobot(s.drivebaseSubsystem, GamePieceType.CONE));
-		triggerDriverAssistCone.onTrue(
-				new ProxyCommand(() -> DriverAssist.alignRobot(s.drivebaseSubsystem, GamePieceType.CONE)));
-
-		triggerDriverAssistCube.onFalse(
-				new InstantCommand(() -> s.drivebaseSubsystem.getCurrentCommand().cancel()));
-		triggerDriverAssistCone.onFalse(
-				new InstantCommand(() -> s.drivebaseSubsystem.getCurrentCommand().cancel()));
 	}
 
 	public void bindArmControls() {
+		//Manual control
 		s.armSubsystem.setPresetAdjustJoysticks(
 				codriveController::getRightY, codriveController::getLeftY);
 
@@ -152,42 +129,37 @@ public class Controls {
 				new ManualArmOverrideOnCommand(
 						s.armSubsystem, codriveController::getRightY, codriveController::getLeftY));
 		armManualControlOff.onTrue(new ManualArmOverrideOffCommand(s.armSubsystem));
-		armLowButton.onTrue(
-				new SetFullArmCommand(
-						s.armSubsystem, ARM_LOW_POSITION, WRIST_RETRACT, FAST_WRIST_EXTEND_TOLERANCE));
-		armMiddleButton.onTrue(
-				new SetFullArmCommand(s.armSubsystem, ARM_MIDDLE_POSITION, WRIST_PRESCORE));
-		armHighButton.onTrue(new SetFullArmCommand(s.armSubsystem, ARM_HIGH_POSITION, WRIST_PRESCORE));
-		armSubstationButton.onTrue(
-				new SetFullArmCommand(
-						s.armSubsystem, ARM_SUBSTATION_POSITION, WRIST_PRESCORE, FAST_WRIST_EXTEND_TOLERANCE));
 
-		wristCarryButton.onTrue(new SetFullArmCommand(s.armSubsystem, ARM_LOW_POSITION, WRIST_RETRACT));
-		wristPrescoreButton.onTrue(new SetWristCommand(s.armSubsystem, WRIST_PRESCORE));
-		wristScoreButton.onTrue(new SetWristCommand(s.armSubsystem, WRIST_SCORE));
-		wristIntakeButton.onTrue(
-				new SetFullArmCommand(s.armSubsystem, ARM_LOW_POSITION, WRIST_PRESCORE));
+
+		//Codriver setting position controls
+		positionLow.onTrue(new SetArmPrePositionCommand(s.armSubsystem, ARM_LOW_POSITION));
+		positionMiddle.onTrue(new SetArmPrePositionCommand(s.armSubsystem, ARM_MIDDLE_POSITION));
+		positionHigh.onTrue(new SetArmPrePositionCommand(s.armSubsystem, ARM_HIGH_POSITION));
+		positionSubstation.onTrue(new SetArmPrePositionCommand(s.armSubsystem, ARM_SUBSTATION_POSITION));
+
+
+		//Driver Activating Arm Controls
+		//Prescore
+		prescoreButton.onTrue(new SetFullArmCommand(s.armSubsystem, s.armSubsystem.getPosition(), WRIST_PRESCORE));
+		prescoreButton.onFalse(new SetWristCommand(s.armSubsystem, WRIST_SCORE));
+		//Score
+		scoreButton.onTrue(new IntakeSetOutCommand(s.intakeSubsystem));
+		scoreButton.onFalse(new SetFullArmCommand(s.armSubsystem, ARM_LOW_POSITION, WRIST_RETRACT));
+		//Retract when done scoring
+		scoreButton.onFalse(new SetFullArmCommand(s.armSubsystem, ARM_LOW_POSITION, WRIST_RETRACT));
 	}
 
 	public void bindIntakeControls() {
 		CommandScheduler.getInstance()
 				.setDefaultCommand(s.intakeSubsystem, new IntakeDefaultCommand(s.intakeSubsystem));
 
-		// Drive Buttons
-
-		driveIntakeInButton.onTrue(new IntakeSetInCommand(s.intakeSubsystem));
-		driveIntakeOutButton.onTrue(new IntakeSetOutCommand(s.intakeSubsystem));
-		driveIntakeFastOutButton.onTrue(new IntakeSetFastOutCommand(s.intakeSubsystem));
-
-		// Codrive buttons
-		codriveIntakeInButton.onTrue(new IntakeSetInCommand(s.intakeSubsystem));
-		codriveIntakeOutButton.onTrue(new IntakeSetOutCommand(s.intakeSubsystem));
-		// if (Subsystems.SubsystemConstants.LED_ENABLED) {
-		// 	codriveIntakeOutButton.onTrue(new IntakeOutCommand(s.intakeSubsystem, s.ledSubsystem));
-		// } else {
-		// 	codriveIntakeOutButton.onTrue(new IntakeSetOutCommand(s.intakeSubsystem));
-		// }
-		// codriveIntakeStopButton.onTrue(new IntakeSetStopCommand(s.intakeSubsystem));
+		// Driver Buttons
+		//Turn the motors on once
+		intakeButton.onTrue(new IntakeSetInCommand(s.intakeSubsystem));
+		//Set new position if codriver changes the arm position while intaking
+		intakeButton.whileTrue(new SetFullArmCommand(s.armSubsystem, s.armSubsystem.getPosition(), WRIST_PRESCORE));
+		//Carry position when done intaking(the intake motors stall to hold a piece, no need to stop them)
+		intakeButton.onFalse(new SetFullArmCommand(s.armSubsystem, ARM_LOW_POSITION, WRIST_RETRACT));
 	}
 
 	public void bindLEDControls() {

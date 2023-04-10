@@ -16,7 +16,7 @@ public class DriveCommand extends CommandBase {
 	private final DoubleSupplier forward;
 	private final DoubleSupplier strafe;
 	private final DoubleSupplier rotation;
-	private final DoubleSupplier turboRotation;
+	private final double turboRotation;
 
 	// shuffleboard
 	private static GenericEntry driveSpeedEntry =
@@ -54,14 +54,13 @@ public class DriveCommand extends CommandBase {
 			DrivebaseSubsystem drivebaseSubsystem,
 			DoubleSupplier forward,
 			DoubleSupplier strafe,
-			DoubleSupplier rotation,
-			DoubleSupplier turboRotation) {
+			DoubleSupplier rotation) {
 		this.drivebaseSubsystem = drivebaseSubsystem;
 		this.forward = forward;
 		this.strafe = strafe;
 		this.rotation = rotation;
 		// this variable give the right trigger input
-		this.turboRotation = turboRotation;
+		this.turboRotation = 1;
 
 		addRequirements(drivebaseSubsystem);
 	}
@@ -71,7 +70,7 @@ public class DriveCommand extends CommandBase {
 		double rotationSpeedModifier =
 				rotationSpeedEntry.getDouble(1.0)
 						* (1
-								- (turboRotation.getAsDouble()
+								- (turboRotation
 										* (1 - turboRotationEntry.getDouble(TURBO_ROTATION_DEFAULT))));
 
 		double x = deadbandCorrection(-forward.getAsDouble());
